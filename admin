@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — NEXORA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --black: #0a0a0a; --bg: #0f0f0f; --card: #141414;
+      --border: rgba(255,255,255,0.07); --white: #f5f0e8;
+      --accent: #c8ff00; --accent2: #ff4d00;
+      --muted: rgba(245,240,232,0.4);
+      --green: #00e676; --yellow: #ffd740; --red: #ff5252; --blue: #40c4ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; }
+
+    /* LOGIN */
+    .login-overlay {
+      position: fixed; inset: 0; background: var(--black);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .login-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 48px 40px; width: 380px;
+    }
+    .login-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 8px; }
+    .login-logo span { color: var(--accent); }
+    .login-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 36px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { font-size: 0.8rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
+    .form-group input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 16px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: rgba(200,255,0,0.4); }
+    .btn-login {
+      width: 100%; background: var(--accent); color: var(--black);
+      border: none; border-radius: 10px; padding: 14px;
+      font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.95rem;
+      cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    }
+    .btn-login:hover { box-shadow: 0 0 24px rgba(200,255,0,0.35); }
+    .login-err { color: var(--accent2); font-size: 0.83rem; text-align: center; margin-top: 12px; min-height: 20px; }
+
+    /* LAYOUT */
+    .dashboard { display: none; }
+    .dashboard.active { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 240px; background: var(--black); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 28px 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+    }
+    .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; padding: 0 24px; margin-bottom: 36px; }
+    .sidebar-logo span { color: var(--accent); }
+    .sidebar-nav { flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; font-size: 0.9rem; color: var(--muted);
+      cursor: pointer; border-radius: 0; transition: all 0.2s;
+      border-left: 2px solid transparent;
+    }
+    .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
+    .nav-item.active { color: var(--white); border-left-color: var(--accent); background: rgba(200,255,0,0.05); }
+    .sidebar-user {
+      padding: 20px 24px; border-top: 1px solid var(--border);
+      font-size: 0.83rem; color: var(--muted);
+    }
+    .sidebar-user strong { display: block; color: var(--white); margin-bottom: 4px; }
+    .logout-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer;
+      margin-top: 10px; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .logout-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* MAIN */
+    .main { flex: 1; padding: 40px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.03em; margin-bottom: 32px; }
+
+    /* STATS GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px; position: relative; overflow: hidden;
+    }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .stat-card.c1::before { background: var(--accent); }
+    .stat-card.c2::before { background: var(--blue); }
+    .stat-card.c3::before { background: var(--green); }
+    .stat-card.c4::before { background: var(--yellow); }
+    .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+    .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.2rem; line-height: 1; }
+    .stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+
+    /* TABLE */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .table-header {
+      padding: 20px 24px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-header h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+    .filter-tabs { display: flex; gap: 8px; }
+    .filter-tab {
+      padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 500;
+      border: 1px solid var(--border); background: none; color: var(--muted);
+      cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .filter-tab:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+    .filter-tab.active { background: var(--accent); color: var(--black); border-color: var(--accent); font-weight: 600; }
+    .search-input {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; outline: none; width: 200px;
+    }
+    .search-input:focus { border-color: rgba(200,255,0,0.3); }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 14px 20px; font-size: 0.75rem;
+      font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    td { padding: 16px 20px; font-size: 0.88rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 600;
+    }
+    .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .s-baru { background: rgba(64,196,255,0.12); color: var(--blue); }
+    .s-baru::before { background: var(--blue); }
+    .s-diproses { background: rgba(255,215,64,0.12); color: var(--yellow); }
+    .s-diproses::before { background: var(--yellow); }
+    .s-selesai { background: rgba(0,230,118,0.12); color: var(--green); }
+    .s-selesai::before { background: var(--green); }
+    .s-ditolak { background: rgba(255,82,82,0.12); color: var(--red); }
+    .s-ditolak::before { background: var(--red); }
+    .action-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 5px 12px; border-radius: 7px; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.2s; font-family: 'DM Sans', sans-serif; margin-right: 4px;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 36px; width: 540px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+      transform: scale(0.95); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 24px; }
+    .modal-field { margin-bottom: 18px; }
+    .modal-field label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px; }
+    .modal-field .val { font-size: 0.93rem; line-height: 1.6; }
+    .modal-field select {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none;
+    }
+    .modal-field textarea {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; resize: vertical;
+      min-height: 100px; outline: none;
+    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .btn-save {
+      background: var(--accent); color: var(--black); border: none;
+      border-radius: 10px; padding: 12px 24px; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .btn-cancel {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 10px; padding: 12px 24px; font-size: 0.9rem;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .empty-state { text-align: center; padding: 64px; color: var(--muted); }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
+    .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 0.9rem; }
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 999;
+      background: var(--accent); color: var(--black);
+      padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 0.9rem;
+      transform: translateY(60px); opacity: 0; transition: all 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: var(--red); color: white; }
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">NEX<span>ORA</span></div>
+    <div class="login-sub">Admin Dashboard — Masuk untuk melanjutkan</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Masuk →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">NEX<span>ORA</span></div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="switchPage('overview')">📊 Overview</div>
+      <div class="nav-item" onclick="switchPage('contacts')">📨 Pesan Masuk</div>
+    </nav>
+    <div class="sidebar-user">
+      <strong id="adminName">Admin</strong>
+      <span id="adminRole">superadmin</span>
+      <br/>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Overview Page -->
+    <div class="page active" id="page-overview">
+      <div class="page-title">Dashboard Overview</div>
+      <div class="stats-grid">
+        <div class="stat-card c1">
+          <div class="stat-label">Total Pesan</div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-sub">Semua waktu</div>
+        </div>
+        <div class="stat-card c2">
+          <div class="stat-label">Pesan Baru</div>
+          <div class="stat-value" id="statBaru">—</div>
+          <div class="stat-sub">Belum diproses</div>
+        </div>
+        <div class="stat-card c3">
+          <div class="stat-label">Selesai</div>
+          <div class="stat-value" id="statSelesai">—</div>
+          <div class="stat-sub">Deal berhasil</div>
+        </div>
+        <div class="stat-card c4">
+          <div class="stat-label">Bulan Ini</div>
+          <div class="stat-value" id="statMonth">—</div>
+          <div class="stat-sub">Pesan masuk</div>
+        </div>
+      </div>
+
+      <!-- Recent contacts -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Pesan Terbaru</h3>
+          <div style="font-size:0.83rem;color:var(--muted)">5 pesan terakhir</div>
+        </div>
+        <div id="recentTable"><div class="loading">Memuat data...</div></div>
+      </div>
+    </div>
+
+    <!-- Contacts Page -->
+    <div class="page" id="page-contacts">
+      <div class="page-title">Manajemen Pesan</div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterContacts('semua', this)">Semua</button>
+            <button class="filter-tab" onclick="filterContacts('baru', this)">Baru</button>
+            <button class="filter-tab" onclick="filterContacts('diproses', this)">Diproses</button>
+            <button class="filter-tab" onclick="filterContacts('selesai', this)">Selesai</button>
+            <button class="filter-tab" onclick="filterContacts('ditolak', this)">Ditolak</button>
+          </div>
+          <input class="search-input" type="text" placeholder="Cari nama / email..." id="searchInput" oninput="debounceSearch()"/>
+        </div>
+        <div id="contactsTable"><div class="loading">Memuat data...</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h3>Detail Pesan</h3>
+    <div id="modalContent"></div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveModal()">Simpan Perubahan</button>
+      <button class="btn-cancel" onclick="closeModalDirect()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '/api';
+  let token = localStorage.getItem('nxToken');
+  let currentFilter = 'semua';
+  let currentContact = null;
+  let searchTimeout = null;
+
+  // ─── AUTH ──────────────────────────────────────
+  async function doLogin() {
+    const username = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginErr');
+    errEl.textContent = '';
+
+    if (!username || !password) { errEl.textContent = 'Username dan password wajib diisi.'; return; }
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!data.success) { errEl.textContent = data.message; return; }
+
+      token = data.token;
+      localStorage.setItem('nxToken', token);
+      document.getElementById('adminName').textContent = data.admin.name;
+      document.getElementById('adminRole').textContent = data.admin.role;
+      showDashboard();
+    } catch (err) {
+      errEl.textContent = 'Gagal terhubung ke server.';
+    }
+  }
+
+  function doLogout() {
+    localStorage.removeItem('nxToken');
+    token = null;
+    document.getElementById('dashboard').classList.remove('active');
+    document.getElementById('loginOverlay').style.display = 'flex';
+  }
+
+  async function checkAuth() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('adminName').textContent = data.admin.name;
+        document.getElementById('adminRole').textContent = data.admin.role;
+        showDashboard();
+      } else { doLogout(); }
+    } catch { doLogout(); }
+  }
+
+  function showDashboard() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    loadStats();
+    loadRecentContacts();
+  }
+
+  // ─── NAVIGATION ─────────────────────────────────
+  function switchPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (page === 'contacts') loadContacts();
+    if (page === 'overview') { loadStats(); loadRecentContacts(); }
+  }
+
+  // ─── API HELPERS ────────────────────────────────
+  const authFetch = (url, opts = {}) => fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts.headers || {}) }
+  }).then(r => r.json());
+
+  // ─── STATS ──────────────────────────────────────
+  async function loadStats() {
+    try {
+      const data = await authFetch(`${API}/admin/contacts/stats`);
+      if (!data.success) return;
+      const { stats } = data;
+      document.getElementById('statTotal').textContent = stats.total;
+      document.getElementById('statBaru').textContent = stats.baru;
+      document.getElementById('statSelesai').textContent = stats.selesai;
+      document.getElementById('statMonth').textContent = stats.thisMonth;
+    } catch (err) { console.error('Stats error:', err); }
+  }
+
+  // ─── RECENT CONTACTS ────────────────────────────
+  async function loadRecentContacts() {
+    const el = document.getElementById('recentTable');
+    try {
+      const data = await authFetch(`${API}/admin/contacts?limit=5`);
+      if (!data.success || !data.data.length) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Belum ada pesan masuk</p></div>';
+        return;
+      }
+      el.innerHTML = buildTable(data.data);
+    } catch { el.innerHTML = '<div class="loading">Gagal memuat data.</div>'; }
+  }
+
+  // ─── CONTACTS TABLE ─────────────────────────────
+  async function loadContacts(filter = currentFilter, search = '') {
+    const el = document.getElementById('contactsTable');
+    el.innerHTML = '<div class="loading">Memuat data...</div>';
+    try {
+      const params = new URLSearchParams({ status: filter, limit: 50 });
+      if (search) params.append('search', search);
+      const data = await authFetch(`${API}/admin/contacts?${params}`);
+      if (!data.success || !data.data.length) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Tidak ada pesan</p></div>';
+        return;
+      }
+      el.innerHTML = buildTable(data.data);
+    } catch { el.innerHTML = '<div class="loading">Gagal memuat data.</div>'; }
+  }
+
+  function buildTable(contacts) {
+    return `<table>
+      <thead><tr>
+        <th>Nama</th><th>Email</th><th>Layanan</th><th>Status</th><th>Tanggal</th><th>Aksi</th>
+      </tr></thead>
+      <tbody>${contacts.map(c => `
+        <tr>
+          <td><strong>${escHtml(c.name)}</strong></td>
+          <td style="color:var(--muted)">${escHtml(c.email)}</td>
+          <td style="color:var(--muted)">${c.service || '—'}</td>
+          <td><span class="status-badge s-${c.status}">${c.status}</span></td>
+          <td style="color:var(--muted)">${formatDate(c.createdAt)}</td>
+          <td>
+            <button class="action-btn" onclick='openModal(${JSON.stringify(c)})'>Detail</button>
+            <button class="action-btn danger" onclick="deleteContact('${c._id}')">Hapus</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  // ─── FILTER & SEARCH ────────────────────────────
+  function filterContacts(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadContacts(filter, document.getElementById('searchInput')?.value || '');
+  }
+
+  function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      loadContacts(currentFilter, document.getElementById('searchInput').value);
+    }, 400);
+  }
+
+  // ─── MODAL ──────────────────────────────────────
+  function openModal(contact) {
+    currentContact = contact;
+    const el = document.getElementById('modalContent');
+    el.innerHTML = `
+      <div class="modal-field"><label>Nama</label><div class="val">${escHtml(contact.name)}</div></div>
+      <div class="modal-field"><label>Email</label><div class="val"><a href="mailto:${contact.email}" style="color:var(--accent)">${contact.email}</a></div></div>
+      <div class="modal-field"><label>Telepon</label><div class="val">${contact.phone || '—'}</div></div>
+      <div class="modal-field"><label>Layanan</label><div class="val">${contact.service || '—'}</div></div>
+      <div class="modal-field"><label>Budget</label><div class="val">${contact.budget || '—'}</div></div>
+      <div class="modal-field"><label>Pesan</label><div class="val" style="white-space:pre-wrap;line-height:1.6">${escHtml(contact.message)}</div></div>
+      <div class="modal-field"><label>Status</label>
+        <select id="modalStatus">
+          ${['baru','diproses','selesai','ditolak'].map(s => `<option value="${s}" ${s===contact.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="modal-field"><label>Catatan Admin</label>
+        <textarea id="modalNotes" placeholder="Tambah catatan...">${contact.adminNotes || ''}</textarea>
+      </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
+  function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+  async function saveModal() {
+    if (!currentContact) return;
+    const status = document.getElementById('modalStatus').value;
+    const adminNotes = document.getElementById('modalNotes').value;
+    try {
+      const data = await authFetch(`${API}/admin/contacts/${currentContact._id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, adminNotes })
+      });
+      if (data.success) {
+        showToast('Berhasil disimpan!');
+        closeModalDirect();
+        loadContacts(currentFilter);
+        loadStats();
+      } else showToast(data.message, true);
+    } catch { showToast('Gagal menyimpan.', true); }
+  }
+
+  async function deleteContact(id) {
+    if (!confirm('Yakin ingin menghapus pesan ini?')) return;
+    try {
+      const data = await authFetch(`${API}/admin/contacts/${id}`, { method: 'DELETE' });
+      if (data.success) {
+        showToast('Pesan dihapus!');
+        loadContacts(currentFilter);
+        loadStats();
+        loadRecentContacts();
+      } else showToast(data.message, true);
+    } catch { showToast('Gagal menghapus.', true); }
+  }
+
+  // ─── UTILS ──────────────────────────────────────
+  function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Enter key login
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginOverlay').style.display !== 'none') doLogin();
+  });
+
+  // Init
+  checkAuth();
+</script>
+</body>
+</html>
